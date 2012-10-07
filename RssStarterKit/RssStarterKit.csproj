@@ -112,9 +112,12 @@
     <Compile Include="MainPage.xaml.cs">
       <DependentUpon>MainPage.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Mocks\MockRssFeedService.cs" />
     <Compile Include="Model\Feed.cs" />
     <Compile Include="Model\FeedItem.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\IRssFeedService.cs" />
+    <Compile Include="Services\RssFeedService.cs" />
   </ItemGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">

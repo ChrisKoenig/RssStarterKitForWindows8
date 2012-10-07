@@ -8,8 +8,7 @@ using System.Threading.Tasks;
 
 namespace RssStarterKit.Model
 {
-    [DataTable(Name="feeds")]
-    public class Feed
+    public class RssFeed
     {
         public int Id { get; set; }
 
@@ -19,7 +18,10 @@ namespace RssStarterKit.Model
         [DataMember(Name="link")]
         public string Link { get; set; }
 
+        [DataMember(Name = "lastUpdated")]
+        public DateTimeOffset LastUpdated { get; set; }
+
         [IgnoreDataMember]
-        public List<FeedItem> Items { get; set; }
+        public List<RssItem> Items { get; set; }
     }
 }

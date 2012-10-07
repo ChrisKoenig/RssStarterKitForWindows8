@@ -1,5 +1,6 @@
 ﻿using Microsoft.WindowsAzure.MobileServices;
 using RssStarterKit.Model;
+using RssStarterKit.Services;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
@@ -22,96 +23,77 @@ using Windows.Web.Syndication;
 
 namespace RssStarterKit
 {
-    /// <summary>
-    /// An empty page that can be used on its own or navigated to within a Frame.
-    /// </summary>
     public sealed partial class MainPage : Page
     {
-        private IMobileServiceTable<Feed> feedTable = App.MobileService.GetTable<Feed>();
-        private ObservableCollection<Feed> feeds;
+        private ObservableCollection<RssFeed> feeds;
+        private IRssFeedService feedService = new MockRssFeedService();
 
         public MainPage()
         {
             this.InitializeComponent();
         }
 
-        /// <summary>
-        /// Invoked when this page is about to be displayed in a Frame.
-        /// </summary>
-        /// <param name="e">Event data that describes how this page was reached.  The Parameter
-        /// property is typically used to configure the page.</param>
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             RefreshFeeds();
         }
 
+        #region Infrastructure
 
         private void RefreshFeeds()
         {
-            // This code refreshes the entries in the list view be querying the TodoItems table.
-            // The query excludes completed TodoItems
-            //feeds = feedTable.ToCollectionView();
-            feeds = GetTestFeeds();
+            feeds = feedService.GetFeeds();
             FeedList.ItemsSource = feeds;
         }
 
-        private ObservableCollection<Feed> GetTestFeeds()
+        private async void ShowItemsForFeed(RssFeed feed)
         {
-            var results = new ObservableCollection<Feed>();
-
-            results.Add(new Feed() { Title = "ChrisKoenig.net", Link = "http://feeds.feedburner.com/chriskoenig" });
-            results.Add(new Feed() { Title = "GiveCamp.org", Link = "http://feeds.feedburner.com/givecamp" });
-
-            return results;
+            if (feed == null) return;
+            FeedItems.ItemsSource = feed.Items;
         }
 
-        private async void AddFeed(Feed feed)
+        private void ShowContentForFeedItem(RssItem feedItem)
         {
-            await feedTable.InsertAsync(feed);
+            if (feedItem == null) return;
+            FeedItemWebView.NavigateToString(feedItem.Summary);
+        }
+        #endregion
+
+        #region Crud
+
+        private async void AddFeed(string Title, string Link)
+        {
+            var feed = await feedService.InsertFeed(Title, Link);
             feeds.Add(feed);
         }
 
-        private async void DeleteFeed(Feed feed)
+        private async void DeleteFeed(RssFeed feed)
         {
-            await feedTable.DeleteAsync(feed);
-            feeds.Remove(feed);
-        }
-
-        private async Task<List<FeedItem>> LoadItemsForFeed(string url)
-        {
-            var items = new List<FeedItem>();
-            var client = new SyndicationClient();
-            var uri = new Uri(url);
-            var syndicationFeed = await client.RetrieveFeedAsync(uri);
-            foreach (var syndicationItem in syndicationFeed.Items)
+            var result = await feedService.DeleteFeed(feed);
+            if (result)
             {
-                var feedItem = new FeedItem()
-                {
-                    Title = syndicationItem.Title.Text,
-                    Link = syndicationItem.Links[0].Uri.ToString(),
-                    Summary = syndicationItem.Summary.Text,
-                    PubDate = syndicationItem.PublishedDate,
-                };
-                items.Add(feedItem);
+                feeds.Remove(feed);
             }
-            return items;
         }
+        #endregion
+
+        #region Event Handlers
 
         private async void FeedList_SelectionChanged_1(object sender, SelectionChangedEventArgs e)
         {
-            var feed = e.AddedItems[0] as Feed;
-            if (feed == null) return;
-            feed.Items = await LoadItemsForFeed(feed.Link);
-            FeedItems.ItemsSource = feed.Items;
+            if (e.AddedItems.Count == 0) return;
+            var feed = e.AddedItems[0] as RssFeed;
+            ShowItemsForFeed(feed);
         }
 
         private void FeedItems_SelectionChanged_1(object sender, SelectionChangedEventArgs e)
         {
-            var feedItem = e.AddedItems[0] as FeedItem;
-            if (feedItem == null) return;
-            //FeedItemWebView.Navigate(new Uri(feedItem.Link));
-            FeedItemWebView.NavigateToString(feedItem.Summary);
+            if (e.AddedItems.Count == 0) return;
+            var feedItem = e.AddedItems[0] as RssItem;
+            ShowContentForFeedItem(feedItem);
         }
+
+        #endregion
 
     }
 }

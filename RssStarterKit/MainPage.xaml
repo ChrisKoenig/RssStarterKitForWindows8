@@ -6,7 +6,7 @@
       xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
       mc:Ignorable="d">
     <Grid Background="{StaticResource ApplicationPageBackgroundThemeBrush}">
-        <Grid x:Name="FullViewGrid">
+        <Grid x:Name="FullViewGrid" Margin="18">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="250" />
                 <ColumnDefinition Width="300" />
